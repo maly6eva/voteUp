@@ -14,6 +14,10 @@ switch (action.type) {
             candidates: action.payload,
             status: 'ready',
         }
+    case 'dataFaild':
+        return {
+            ...state, status: 'error'
+        }
 }
 }
 
@@ -22,15 +26,27 @@ function VoteTracker() {
 
     useEffect(() => {
         async function fetchData() {
-            const res = await fetch('http://localhost:9000/candidates')
-            if(!res.ok){
-                throw new Error('Failed to fetch data')
+            try {
+                const res = await fetch('http://localhost:9000/candidates')
+                if (!res.ok) {
+                    throw new Error('Failed to fetch data')
+                }
+                const data = await res.json()
+                dispath({type: 'dataReceived', payload: data})}
+            catch (error) {
+                dispath({type: 'dataFaild'})
             }
-            const data = await res.json()
-            dispath({type: 'dataReceived', payload: data})
         }
         fetchData()
     },[])
+
+    if (state.status === 'loading') {
+        return <p>Loading data? please wait...</p>
+    }
+
+    if (!state.status === 'error') {
+        return <p>LFailed data..</p>
+    }
 
   return (
     <>
@@ -41,11 +57,9 @@ function VoteTracker() {
                   <button>+</button>
                   <button>-</button>
               </li>
-
           ))}
       </ul>
       <button>Reset Votes</button>
-
       <div>
         <h2>Add Candidate</h2>
         <input type="text" placeholder="Candidate name" />
